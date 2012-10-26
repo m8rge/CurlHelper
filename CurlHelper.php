@@ -25,8 +25,8 @@ class CurlHelper
 	/**
 	 * @param string $url
 	 * @param array $additionalConfig
-	 * @return mixed downloaded data
 	 * @throws CurlException
+	 * @return mixed downloaded data
 	 */
 	static function getUrl($url, $additionalConfig = array()) {
 		$ch = curl_init();
@@ -48,27 +48,27 @@ class CurlHelper
 
 	/**
 	 * @param string $url
-	 * @param array $postQuery
+	 * @param array $postFields
 	 * @param array $additionalConfig
 	 * @return mixed returned data
 	 * @throws CurlException
 	 */
-	static function postUrl($url, $postQuery, $additionalConfig = array()) {
+	static function postUrl($url, $postFields, $additionalConfig = array()) {
 		$ch = curl_init();
 		$timeout = 5;
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $postQuery);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
 		curl_setopt_array($ch, $additionalConfig);
 		$data = curl_exec($ch);
 		if ($data === false)
-			throw new CurlException("posting to $url failed with error: ".curl_error($ch).". postFields: ".print_r($postQuery, true));
+			throw new CurlException("posting to $url failed with error: ".curl_error($ch).". postFields: ".print_r($postFields, true));
 		$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		curl_close($ch);
 		if ($http_status >= 400)
-			throw new CurlException("url $url return $http_status response code. postFields: ".print_r($postQuery, true));
+			throw new CurlException("url $url return $http_status response code. postFields: ".print_r($postFields, true));
 
 		return $data;
 	}
