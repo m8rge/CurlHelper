@@ -37,7 +37,7 @@ class CurlHelper
 		curl_setopt_array($ch, $additionalConfig);
 		$data = curl_exec($ch);
 		if ($data === false)
-			throw new CurlException("retrieving url $url failed with error: ".curl_error($ch));
+			throw new CurlException("retrieving url $url failed with error: ".curl_error($ch)."\nreturned data: $data");
 		$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		curl_close($ch);
 		if ($http_status >= 400)
@@ -68,7 +68,7 @@ class CurlHelper
 		$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		curl_close($ch);
 		if ($http_status >= 400)
-			throw new CurlException("url $url return $http_status response code. postFields: ".print_r($postFields, true));
+			throw new CurlException("url $url return $http_status response code. postFields: ".print_r($postFields, true)."\nreturned data: $data");
 
 		return $data;
 	}
