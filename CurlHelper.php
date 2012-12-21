@@ -41,7 +41,7 @@ class CurlHelper
 		$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		curl_close($ch);
 		if ($http_status >= 400)
-			throw new CurlException("url $url return $http_status response code");
+			throw new CurlException("url $url return $http_status response code. returned data: $data");
 
 		return $data;
 	}
