@@ -15,5 +15,6 @@
     },
     "autoload": {
         "psr-0": { "m8rge": "" }
-    }
+    },
+    "target-dir": "m8rge"
 }
