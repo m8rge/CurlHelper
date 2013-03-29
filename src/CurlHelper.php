@@ -1,4 +1,4 @@
-<?php namespace m8rge;
+<?php
 
 class CurlHelper
 {
@@ -112,12 +112,12 @@ class CurlHelper
     }
 }
 
-class CurlException extends \Exception
+class CurlException extends Exception
 {
     /** @var string */
     protected $data;
 
-    public function __construct($message = "", $code = 0, $data = '', \Exception $previous = null)
+    public function __construct($message = "", $code = 0, $data = '', Exception $previous = null)
     {
         $this->data = $data;
         parent::__construct($message, $code, $previous);
