@@ -1,6 +1,7 @@
 {
     "name": "m8rge/curl-helper",
     "description": "This helper allows easy perform GET, POST queries with curl php extension.",
+    "license" : "MIT",
     "keywords": ["curl", "helper"],
     "authors": [
         {
