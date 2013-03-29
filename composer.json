@@ -15,7 +15,7 @@
     },
     "autoload": {
         "psr-0": {
-            "m8rge": ""
+            "m8rge": "src/"
         }
     }
 }
