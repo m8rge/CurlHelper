@@ -2,6 +2,16 @@
 
 class CurlHelper
 {
+    protected static function defaultSettings()
+    {
+        return array(
+            CURLOPT_AUTOREFERER => true,
+            CURLOPT_MAXREDIRS => 5,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_CONNECTTIMEOUT => 5,
+        );
+    }
+
     /**
      * @param string $url
      * @param array $additionalConfig
@@ -33,10 +43,9 @@ class CurlHelper
     static function getUrl($url, $additionalConfig = array())
     {
         $ch = curl_init();
-        $timeout = 5;
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+        curl_setopt_array($ch, self::defaultSettings());
         curl_setopt_array($ch, $additionalConfig);
         $data = curl_exec($ch);
         if ($data === false) {
@@ -61,12 +70,11 @@ class CurlHelper
     static function postUrl($url, $postFields, $additionalConfig = array())
     {
         $ch = curl_init();
-        $timeout = 5;
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+        curl_setopt_array($ch, self::defaultSettings());
         curl_setopt_array($ch, $additionalConfig);
         $data = curl_exec($ch);
         if ($data === false) {
@@ -93,10 +101,9 @@ class CurlHelper
     {
         $fp = fopen($toFile, 'w');
         $ch = curl_init();
-        $timeout = 5;
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_FILE, $fp);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+        curl_setopt_array($ch, self::defaultSettings());
         curl_setopt_array($ch, $additionalConfig);
         $res = curl_exec($ch);
         if ($res === false) {
