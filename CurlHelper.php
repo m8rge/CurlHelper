@@ -128,10 +128,10 @@ class CurlHelper
      * @param array $urlsToFiles
      * @param callable $callback function(string $url, string $toFile, CurlException|null $e)
      * @param array $additionalConfig
-     * @param int $rollingWindow
+     * @param int $parallelDownloads
      * @throws CurlException
      */
-    public static function batchDownload($urlsToFiles, $callback, $additionalConfig = array(), $rollingWindow = 15)
+    public static function batchDownload($urlsToFiles, $callback, $additionalConfig = array(), $parallelDownloads = 15)
     {
         $selectTimeout = 1;
         $options = self::defaultSettings() + $additionalConfig;
@@ -162,7 +162,7 @@ class CurlHelper
         };
 
         $i = 0;
-        foreach (array_slice($urlsToFiles, $i, $rollingWindow, true) as $url => $toFile) {
+        foreach (array_slice($urlsToFiles, $i, $parallelDownloads, true) as $url => $toFile) {
             $addRequest($url, $toFile);
             $i++;
         }
@@ -182,7 +182,7 @@ class CurlHelper
                     $e = new CurlException("retrieving url {$request['url']} failed with error: " . curl_error($ch));
                 }
 
-                $httpStatus = curl_getinfo($done['handle'], CURLINFO_HTTP_CODE);
+                $httpStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 if ($httpStatus >= 400) {
                     $e = new CurlException("url {$request['url']} return $httpStatus response code", $httpStatus);
                 }
@@ -195,7 +195,7 @@ class CurlHelper
                     $addRequest(key($entry), reset($entry));
                 }
 
-                curl_multi_remove_handle($master, $done['handle']);
+                curl_multi_remove_handle($master, $ch);
             }
             if ($running) {
                 curl_multi_select($master, $selectTimeout);
