@@ -131,7 +131,7 @@ class CurlHelper
      * @param int $parallelDownloads
      * @throws CurlException
      */
-    public static function batchDownload($urlsToFiles, $callback, $additionalConfig = array(), $parallelDownloads = 15)
+    public static function batchDownload($urlsToFiles, $callback, $additionalConfig = array(), $parallelDownloads = 5)
     {
         $selectTimeout = 1;
         $options = self::defaultSettings() + $additionalConfig;
