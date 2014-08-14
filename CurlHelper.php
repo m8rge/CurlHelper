@@ -44,7 +44,6 @@ class CurlHelper
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_PORT, 80);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt_array($ch, self::defaultSettings() + $additionalConfig);
         $data = curl_exec($ch);
@@ -193,6 +192,81 @@ class CurlHelper
                 $entry = array_slice($urlsToFiles, $i++, 1, true);
                 if (!empty($entry)) {
                     $addRequest(key($entry), reset($entry));
+                }
+
+                curl_multi_remove_handle($master, $ch);
+            }
+            if ($running) {
+                curl_multi_select($master, $selectTimeout);
+            }
+        } while ($running);
+
+        curl_multi_close($master);
+    }
+
+    /**
+     * @param string[] $urls
+     * @param callable $callback function(string $url, string $result, CurlException|null $e)
+     * @param array $additionalConfig
+     * @param int $parallelDownloads
+     * @throws CurlException
+     */
+    public static function batchGet($urls, $callback, $additionalConfig = array(), $parallelDownloads = 5)
+    {
+        $selectTimeout = 1;
+        $options = self::defaultSettings() + $additionalConfig;
+        $requests = array();
+
+        $master = curl_multi_init();
+
+        /**
+         * @param string $url
+         * @throws CurlException
+         */
+        $addRequest = function ($url) use ($options, $master, &$requests) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt_array($ch, $options);
+            if (CURLM_OK != $res = curl_multi_add_handle($master, $ch)) {
+                throw new CurlException("error($res) while adding curl multi handle");
+            }
+            $requests[(int)$ch] = array(
+                'url' => $url,
+            );
+        };
+
+        $i = 0;
+        foreach (array_slice($urls, $i, $parallelDownloads) as $url) {
+            $addRequest($url);
+            $i++;
+        }
+
+        do {
+            while (CURLM_CALL_MULTI_PERFORM == $res = curl_multi_exec($master, $running)) {
+            }
+            if ($res != CURLM_OK) {
+                throw new CurlException("curl_multi_exec failed with error code " . $res);
+            }
+
+            while ($done = curl_multi_info_read($master)) {
+                $e = null;
+                $ch = $done['handle'];
+                $request = $requests[(int)$ch];
+                if ($done['result'] != CURLE_OK) {
+                    $e = new CurlException("retrieving url {$request['url']} failed with error: " . curl_error($ch));
+                }
+
+                $httpStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                if ($httpStatus >= 400) {
+                    $e = new CurlException("url {$request['url']} return $httpStatus response code", $httpStatus);
+                }
+
+                $content = curl_multi_getcontent($ch);
+                call_user_func($callback, $request['url'], $content, $e);
+
+                if (!empty($urls[$i])) {
+                    $addRequest($urls[$i++]);
                 }
 
                 curl_multi_remove_handle($master, $ch);
