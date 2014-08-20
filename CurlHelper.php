@@ -9,6 +9,7 @@ class CurlHelper
             CURLOPT_MAXREDIRS => 5,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_SSL_VERIFYPEER => false,
         );
     }
 
@@ -189,12 +190,14 @@ class CurlHelper
                 fclose($request['filePointer']);
                 call_user_func($callback, $request['url'], $request['fileName'], $e);
 
-                $entry = array_slice($urlsToFiles, $i++, 1, true);
-                if (!empty($entry)) {
+                if ($i < count($urlsToFiles)) {
+                    $entry = array_slice($urlsToFiles, $i++, 1, true);
                     $addRequest(key($entry), reset($entry));
+                    $running = true;
                 }
 
                 curl_multi_remove_handle($master, $ch);
+                curl_close($ch);
             }
             if ($running) {
                 curl_multi_select($master, $selectTimeout);
@@ -267,9 +270,11 @@ class CurlHelper
 
                 if (!empty($urls[$i])) {
                     $addRequest($urls[$i++]);
+                    $running = true;
                 }
 
                 curl_multi_remove_handle($master, $ch);
+                curl_close($ch);
             }
             if ($running) {
                 curl_multi_select($master, $selectTimeout);
