@@ -268,8 +268,9 @@ class CurlHelper
                 $content = curl_multi_getcontent($ch);
                 call_user_func($callback, $request['url'], $content, $e);
 
-                if (!empty($urls[$i])) {
-                    $addRequest($urls[$i++]);
+                foreach (array_slice($urls, $i, 1) as $url) {
+                    $addRequest($url);
+                    $i++;
                     $running = true;
                 }
 
