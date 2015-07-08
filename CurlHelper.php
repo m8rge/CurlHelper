@@ -17,15 +17,19 @@ class CurlHelper
      * @param string $url
      * @param array $additionalConfig
      * @param int $retryCount
+     * @param int $sleepMultiplier if > 0, then sleep $sleepMultiplier * $retryIndex seconds before next request 
+     * after unsuccessful request
+     * @return mixed
      * @throws CurlException
-     * @return mixed downloaded data or false if failed
+     * @throws \Exception
      */
-    public static function getUrlFailSafe($url, $additionalConfig = array(), $retryCount = 5)
+    public static function getUrlFailSafe($url, $additionalConfig = array(), $retryCount = 5, $sleepMultiplier = 2)
     {
         for ($i = 0; $i < $retryCount; $i++) {
             try {
                 return self::getUrl($url, $additionalConfig);
             } catch (CurlException $e) {
+                sleep($i * $sleepMultiplier);
                 if ($i + 1 == $retryCount) {
                     throw $e;
                 }
