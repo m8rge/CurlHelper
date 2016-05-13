@@ -4,13 +4,13 @@ class CurlHelper
 {
     protected static function defaultSettings()
     {
-        return array(
+        return [
             CURLOPT_AUTOREFERER => true,
             CURLOPT_MAXREDIRS => 5,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_SSL_VERIFYPEER => false,
-        );
+        ];
     }
 
     /**
@@ -20,7 +20,7 @@ class CurlHelper
      * @throws CurlException
      * @return CurlResult
      */
-    public static function getUrlFailSafe($url, $additionalConfig = array(), $retryCount = 5)
+    public static function getUrlFailSafe($url, $additionalConfig = [], $retryCount = 5)
     {
         for ($i = 0; $i < $retryCount; $i++) {
             try {
@@ -42,7 +42,7 @@ class CurlHelper
      * @throws CurlException
      * @return CurlResult
      */
-    public static function getUrl($url, $additionalConfig = array())
+    public static function getUrl($url, $additionalConfig = [])
     {
         $ch = curl_init();
         curl_setopt_array($ch, [
@@ -68,7 +68,7 @@ class CurlHelper
      * @return CurlResult
      * @throws CurlException
      */
-    public static function postUrl($url, $postFields, $additionalConfig = array())
+    public static function postUrl($url, $postFields, $additionalConfig = [])
     {
         $ch = curl_init();
         curl_setopt_array($ch, [
@@ -95,7 +95,7 @@ class CurlHelper
      * @param array $additionalConfig
      * @throws CurlException
      */
-    public static function downloadToFile($url, $toFile, $additionalConfig = array())
+    public static function downloadToFile($url, $toFile, $additionalConfig = [])
     {
         $fp = fopen($toFile, 'w');
         $ch = curl_init();
@@ -120,11 +120,11 @@ class CurlHelper
      * @param int $parallelDownloads
      * @throws \Exception
      */
-    public static function batchDownload($urlsToFiles, $callback, $additionalConfig = array(), $parallelDownloads = 5)
+    public static function batchDownload($urlsToFiles, $callback, $additionalConfig = [], $parallelDownloads = 5)
     {
         $selectTimeout = 1;
         $options = $additionalConfig + self::defaultSettings();
-        $requests = array();
+        $requests = [];
 
         $master = curl_multi_init();
 
@@ -144,11 +144,11 @@ class CurlHelper
             if (CURLM_OK != $res = curl_multi_add_handle($master, $ch)) {
                 throw new \Exception("error($res) while adding curl multi handle");
             }
-            $requests[(int)$ch] = array(
+            $requests[(int)$ch] = [
                 'url' => $url,
                 'filePointer' => $fp,
                 'fileName' => $toFile,
-            );
+            ];
         };
 
         $i = 0;
@@ -200,7 +200,7 @@ class CurlHelper
      * @param int $parallelDownloads
      * @throws \Exception
      */
-    public static function batchGet($urls, $callback, $additionalConfig = array(), $parallelDownloads = 5)
+    public static function batchGet($urls, $callback, $additionalConfig = [], $parallelDownloads = 5)
     {
         $selectTimeout = 1;
         $options = $additionalConfig + self::defaultSettings();
