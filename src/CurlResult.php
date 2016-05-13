@@ -48,6 +48,12 @@ class CurlResult
         $this->url = curl_getinfo($curlHandler, CURLINFO_EFFECTIVE_URL);
     }
 
+    function __toString()
+    {
+        return '(' . $this->statusCode . ($this->error ? ' ' . $this->error : '') . ') ' .
+            substr($this->response, 0, 100);
+    }
+
     protected function parseHeaders($rawHeaders)
     {
         $headers = [];
