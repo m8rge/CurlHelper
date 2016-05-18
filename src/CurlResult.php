@@ -51,7 +51,7 @@ class CurlResult
     function __toString()
     {
         return '(' . $this->statusCode . ($this->error ? ' ' . $this->error : '') . ') ' .
-            substr($this->response, 0, 100);
+            substr($this->response, 0, 100) . (strlen($this->response) > 100 ? '…' : '');
     }
 
     protected function parseHeaders($rawHeaders)
