@@ -51,6 +51,7 @@ class CurlResult
     function __toString()
     {
         return '(' . $this->statusCode . ($this->error ? ' ' . $this->error : '') . ') ' .
+            strlen($this->response) . ' bytes: ' .
             substr($this->response, 0, 100) . (strlen($this->response) > 100 ? '…' : '');
     }
 
