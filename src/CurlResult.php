@@ -11,7 +11,12 @@ class CurlResult
     /**
      * @var string
      */
-    public $url;
+    public $requestUrl;
+
+    /**
+     * @var string
+     */
+    public $effectiveUrl;
 
     /**
      * @var string
@@ -31,8 +36,9 @@ class CurlResult
     /**
      * CurlResult constructor.
      * @param resource $curlHandler
+     * @param string $requestUrl
      */
-    public function __construct($curlHandler)
+    public function __construct($curlHandler, $requestUrl)
     {
         if (curl_errno($curlHandler)) {
             $this->error = curl_error($curlHandler);
@@ -45,7 +51,8 @@ class CurlResult
             $this->response = $body;
         }
         $this->statusCode = curl_getinfo($curlHandler, CURLINFO_HTTP_CODE);
-        $this->url = curl_getinfo($curlHandler, CURLINFO_EFFECTIVE_URL);
+        $this->effectiveUrl = curl_getinfo($curlHandler, CURLINFO_EFFECTIVE_URL);
+        $this->requestUrl = $requestUrl;
     }
 
     function __toString()

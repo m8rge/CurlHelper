@@ -22,10 +22,13 @@ class CurlHelper
      */
     public static function getUrlFailSafe($url, $additionalConfig = [], $retryCount = 5)
     {
+        $lastException = null;
+        
         for ($i = 0; $i < $retryCount; $i++) {
             try {
-                return self::getUrl($url, $additionalConfig);
+                return self::get($url, $additionalConfig);
             } catch (CurlException $e) {
+                $lastException = $e;
                 sleep($i);
                 if ($e->curlResult->statusCode < 500 || $i + 1 == $retryCount) {
                     throw $e;
@@ -33,7 +36,7 @@ class CurlHelper
             }
         }
 
-        return false;
+        throw $lastException;
     }
 
     /**
@@ -42,7 +45,7 @@ class CurlHelper
      * @throws CurlException
      * @return CurlResult
      */
-    public static function getUrl($url, $additionalConfig = [])
+    public static function get($url, $additionalConfig = [])
     {
         $ch = curl_init();
         curl_setopt_array($ch, [
@@ -51,7 +54,7 @@ class CurlHelper
                 CURLOPT_HEADER => 1,
             ] + $additionalConfig + self::defaultSettings());
         curl_exec($ch);
-        $result = new CurlResult($ch);
+        $result = new CurlResult($ch, $url);
         curl_close($ch);
 
         if ($result->error || $result->statusCode >= 400) {
@@ -68,7 +71,7 @@ class CurlHelper
      * @return CurlResult
      * @throws CurlException
      */
-    public static function postUrl($url, $postFields, $additionalConfig = [])
+    public static function post($url, $postFields, $additionalConfig = [])
     {
         $ch = curl_init();
         curl_setopt_array($ch, [
@@ -79,7 +82,7 @@ class CurlHelper
                 CURLOPT_POSTFIELDS => $postFields,
             ] + $additionalConfig + self::defaultSettings());
         curl_exec($ch);
-        $result = new CurlResult($ch);
+        $result = new CurlResult($ch, $url);
         curl_close($ch);
 
         if ($result->error || $result->statusCode >= 400) {
@@ -95,7 +98,7 @@ class CurlHelper
      * @param array $additionalConfig
      * @throws CurlException
      */
-    public static function downloadToFile($url, $toFile, $additionalConfig = [])
+    public static function download($url, $toFile, $additionalConfig = [])
     {
         $fp = fopen($toFile, 'w');
         $ch = curl_init();
@@ -104,7 +107,7 @@ class CurlHelper
                 CURLOPT_FILE => $fp,
             ] + $additionalConfig + self::defaultSettings());
         curl_exec($ch);
-        $result = new CurlResult($ch);
+        $result = new CurlResult($ch, $url);
         curl_close($ch);
         fclose($fp);
 
@@ -168,7 +171,7 @@ class CurlHelper
                 $e = null;
                 $ch = $done['handle'];
                 $request = $requests[(int)$ch];
-                $result = new CurlResult($ch);
+                $result = new CurlResult($ch, $request['url']);
                 if ($result->error || $result->statusCode >= 400) {
                     $e = new CurlException($result);
                 }
@@ -204,6 +207,7 @@ class CurlHelper
     {
         $selectTimeout = 1;
         $options = $additionalConfig + self::defaultSettings();
+        $requests = [];
 
         $master = curl_multi_init();
 
@@ -211,7 +215,7 @@ class CurlHelper
          * @param string $url
          * @throws \Exception
          */
-        $addRequest = function ($url) use ($options, $master) {
+        $addRequest = function ($url) use ($options, $master, &$requests) {
             $ch = curl_init();
             curl_setopt_array($ch, [
                     CURLOPT_URL => $url,
@@ -220,6 +224,9 @@ class CurlHelper
             if (CURLM_OK != $res = curl_multi_add_handle($master, $ch)) {
                 throw new \Exception("error($res) while adding curl multi handle");
             }
+            $requests[(int)$ch] = [
+                'url' => $url,
+            ];
         };
 
         $i = 0;
@@ -238,7 +245,8 @@ class CurlHelper
             while ($done = curl_multi_info_read($master)) {
                 $e = null;
                 $ch = $done['handle'];
-                $result = new CurlResult($ch);
+                $request = $requests[(int)$ch];
+                $result = new CurlResult($ch, $request['url']);
                 if ($result->error || $result->statusCode >= 400) {
                     $e = new CurlException($result);
                 }
