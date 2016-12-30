@@ -20,9 +20,9 @@ class CurlException extends \Exception
         $this->curlResult = $curlResult;
         $this->postFields = $postFields;
         if ($curlResult->error) {
-            $message = ($postFields ? 'posting to' : 'retrieving') . " url $curlResult->url failed with error: $curlResult->error";
+            $message = ($postFields ? 'posting to' : 'retrieving') . " url $curlResult->requestUrl failed with error: $curlResult->error";
         } elseif ($curlResult->statusCode >= 400) {
-            $message = ($postFields ? 'posting to' : 'retrieving') . " url $curlResult->url return $curlResult->statusCode response code";
+            $message = ($postFields ? 'posting to' : 'retrieving') . " url $curlResult->requestUrl return $curlResult->statusCode response code";
         }
 
         parent::__construct(isset($message) ? $message : '', 0, $previous);
