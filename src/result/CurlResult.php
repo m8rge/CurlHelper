@@ -1,28 +1,10 @@
-<?php namespace m8rge;
+<?php
+
+namespace m8rge\curl\result;
 
 
-class CurlResult
+class CurlResult extends CurlBaseResult
 {
-    /**
-     * @var string
-     */
-    public $statusCode;
-
-    /**
-     * @var string
-     */
-    public $requestUrl;
-
-    /**
-     * @var string
-     */
-    public $effectiveUrl;
-
-    /**
-     * @var string
-     */
-    public $error;
-
     /**
      * @var string
      */
@@ -33,26 +15,16 @@ class CurlResult
      */
     public $headers;
 
-    /**
-     * CurlResult constructor.
-     * @param resource $curlHandler
-     * @param string $requestUrl
-     */
-    public function __construct($curlHandler, $requestUrl)
+    public function init()
     {
-        if (curl_errno($curlHandler)) {
-            $this->error = curl_error($curlHandler);
-        }
-
-        $response = curl_multi_getcontent($curlHandler);
+        $response = curl_multi_getcontent($this->curlHandler);
         if (is_string($response) && !empty($response)) {
             list($headers, $body) = explode("\r\n\r\n", $response, 2);
             $this->headers = $this->parseHeaders($headers);
             $this->response = $body;
         }
-        $this->statusCode = curl_getinfo($curlHandler, CURLINFO_HTTP_CODE);
-        $this->effectiveUrl = curl_getinfo($curlHandler, CURLINFO_EFFECTIVE_URL);
-        $this->requestUrl = $requestUrl;
+
+        parent::init();
     }
 
     function __toString()

@@ -1,4 +1,9 @@
-<?php namespace m8rge;
+<?php
+
+namespace m8rge\curl;
+
+use m8rge\curl\result\CurlFileResult;
+use m8rge\curl\result\CurlResult;
 
 class CurlHelper
 {
@@ -9,7 +14,6 @@ class CurlHelper
             CURLOPT_MAXREDIRS => 5,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_CONNECTTIMEOUT => 5,
-            CURLOPT_SSL_VERIFYPEER => false,
         ];
     }
 
@@ -54,7 +58,7 @@ class CurlHelper
                 CURLOPT_HEADER => 1,
             ] + $additionalConfig + self::defaultSettings());
         curl_exec($ch);
-        $result = new CurlResult($ch, $url);
+        $result = new CurlResult(['curlHandler' => $ch, 'requestUrl' => $url]);
         curl_close($ch);
 
         if ($result->error || $result->statusCode >= 400) {
@@ -82,11 +86,11 @@ class CurlHelper
                 CURLOPT_POSTFIELDS => $postFields,
             ] + $additionalConfig + self::defaultSettings());
         curl_exec($ch);
-        $result = new CurlResult($ch, $url);
+        $result = new CurlResult(['curlHandler' => $ch, 'requestUrl' => $url]);
         curl_close($ch);
 
         if ($result->error || $result->statusCode >= 400) {
-            throw new CurlException($result);
+            throw new CurlPostException($result, $postFields);
         }
 
         return $result;
@@ -107,7 +111,7 @@ class CurlHelper
                 CURLOPT_FILE => $fp,
             ] + $additionalConfig + self::defaultSettings());
         curl_exec($ch);
-        $result = new CurlResult($ch, $url);
+        $result = new CurlFileResult(['curlHandler' => $ch, 'requestUrl' => $url, 'fileName' => $toFile]);
         curl_close($ch);
         fclose($fp);
 
@@ -118,12 +122,13 @@ class CurlHelper
 
     /**
      * @param array $urlsToFiles
-     * @param callable $callback function(CurlResult $result, CurlException|null $e)
+     * @param callable $success function(CurlFileResult $result)
+     * @param callable $failed function(CurlException $e)
      * @param array $additionalConfig
      * @param int $parallelDownloads
      * @throws \Exception
      */
-    public static function batchDownload($urlsToFiles, $callback, $additionalConfig = [], $parallelDownloads = 5)
+    public static function batchDownload($urlsToFiles, $success, $failed, $additionalConfig = [], $parallelDownloads = 5)
     {
         $selectTimeout = 1;
         $options = $additionalConfig + self::defaultSettings();
@@ -171,13 +176,15 @@ class CurlHelper
                 $e = null;
                 $ch = $done['handle'];
                 $request = $requests[(int)$ch];
-                $result = new CurlResult($ch, $request['url']);
+                fclose($request['filePointer']);
+
+                $result = new CurlFileResult(['curlHandler' => $ch, 'requestUrl' => $request['url'], 'fileName' => $request['fileName']]);
                 if ($result->error || $result->statusCode >= 400) {
                     $e = new CurlException($result);
+                    call_user_func($failed, $e);
+                } else {
+                    call_user_func($success, $result);
                 }
-
-                fclose($request['filePointer']);
-                call_user_func($callback, $result, $e);
 
                 if ($i < count($urlsToFiles)) {
                     $entry = array_slice($urlsToFiles, $i++, 1, true);
@@ -198,12 +205,13 @@ class CurlHelper
 
     /**
      * @param string[] $urls
-     * @param callable $callback function(CurlResult $result, CurlException|null $e)
+     * @param callable $success function(CurlResult $result)
+     * @param callable $failed function(CurlException $e)
      * @param array $additionalConfig
      * @param int $parallelDownloads
      * @throws \Exception
      */
-    public static function batchGet($urls, $callback, $additionalConfig = [], $parallelDownloads = 5)
+    public static function batchGet($urls, $success, $failed, $additionalConfig = [], $parallelDownloads = 5)
     {
         $selectTimeout = 1;
         $options = $additionalConfig + self::defaultSettings();
@@ -246,12 +254,13 @@ class CurlHelper
                 $e = null;
                 $ch = $done['handle'];
                 $request = $requests[(int)$ch];
-                $result = new CurlResult($ch, $request['url']);
+                $result = new CurlResult(['curlHandler' => $ch, 'requestUrl' => $request['url']]);
                 if ($result->error || $result->statusCode >= 400) {
                     $e = new CurlException($result);
+                    call_user_func($failed, $e);
+                } else {
+                    call_user_func($success, $result);
                 }
-
-                call_user_func($callback, $result, $e);
 
                 foreach (array_slice($urls, $i, 1) as $url) {
                     $addRequest($url);
