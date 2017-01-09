@@ -2,6 +2,8 @@
 
 namespace m8rge\curl;
 
+use m8rge\curl\exception\CurlException;
+use m8rge\curl\exception\CurlPostException;
 use m8rge\curl\result\CurlFileResult;
 use m8rge\curl\result\CurlResult;
 

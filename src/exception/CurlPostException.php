@@ -1,6 +1,6 @@
 <?php
 
-namespace m8rge\curl;
+namespace m8rge\curl\exception;
 
 
 use m8rge\curl\result\CurlBaseResult;
